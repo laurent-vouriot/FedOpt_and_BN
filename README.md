@@ -934,8 +934,8 @@ Then FedOpt:
 \begin{align*}
     x_{t+1} & = x_t + \frac{\sum_{i \in \mathcal{S}} p_i \Delta_i^t}{m_t} \\
             & = x_t + \frac{\sum_{i \in \mathcal{S}} p_i (x_i^t - x_t)}{m_t}\\
-            & = x_t + \frac{1}{m_t} (\sum_{i \in \mathcal{S}} p_i x_i^t - \sum_{i \in \mathcal{S}} p_i x_t))\\
-            & = x_t + \frac{1}{m_t} (\sum_{i \in \mathcal{S}} p_i x_i^t - m_t \times x_t))\\
+            & = x_t + \frac{1}{m_t} (\sum_{i \in \mathcal{S}} p_i x_i^t - \sum_{i \in \mathcal{S}} p_i x_t)\\
+            & = x_t + \frac{1}{m_t} (\sum_{i \in \mathcal{S}} p_i x_i^t - m_t \times x_t)\\
             & = \frac{\sum_{i \in \mathcal{S}} p_i }{m_t} x_i^t. \\
 \end{align*}
 ```
