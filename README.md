@@ -232,7 +232,7 @@ class Net(torch.nn.Module):
 
 Below is the algorithm for FedOpt as defined in  [A Field Guide to Federated Optimization, Jianyu Wang et al. 2021](https://arxiv.org/abs/2107.06917)  which will serve as the basis for our implementation.
 
-![FedOpt](figs/FedOptAlg.PNG "FedOpt")
+![FedOpt](figs/FedOptAlg.png "FedOpt")
 
 
 ```python
@@ -440,7 +440,7 @@ When using `FedOpt` with the server learning rate set to 1 (i.e., equivalent to 
 SiloBN ([Siloed federated learning for multi-centric histopathology datasets, Andreux et al. 2020](https://arxiv.org/abs/2008.07424))
 essentially shares the learnable parameters of batch normalization layers, while keeping the batch normalization statistics local to each client. This approach allows for somewhat personalized models that are better adapted to local datasets while still benefiting from shared general knowledge.
 
-![SiloBN](figs/SiloBN.png "SiloBN")
+![SiloBN](figs/SiloBN.PNG "SiloBN")
 
 
 ```python
@@ -563,7 +563,7 @@ Nothing better
 ## FedBN
 FedBN ([FedBN: Federated Learning on Non-IID Features via Local Batch Normalization, Li et al. 2021](https://arxiv.org/abs/2102.07623))is a federated learning approach where all batch normalization parameters, including the learnable parameters (e.g., scale and shift parameters) and the running statistics (e.g., mean and variance), are kept local to each client.
 
-![FedBN](figs/FedBN.png "FedBN algorithm")
+![FedBN](figs/FedBN.PNG "FedBN algorithm")
 
 
 ```python
@@ -688,7 +688,7 @@ As mentioned previously, `FedOpt` allows the use of gradient-descent-based optim
 
 
 
-![ServerOpts](figs/AdaptativeFed.png "Adaptative Federated Optimization")
+![ServerOpts](figs/AdaptativeFed.PNG "Adaptative Federated Optimization")
 
  Here are the optimizers mentioned in Adaptative Federated Optimization, including additional bias correction for `Yogi`and `Adam`.
 
