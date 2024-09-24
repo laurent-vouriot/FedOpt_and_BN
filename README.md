@@ -919,7 +919,7 @@ ServerYogi and ServerAdam produced significantly better results. While it is cle
 
 let 
 ```math
-p_i = \sum_{i \in \mathcal{D}_{\mathcal{S}_i}} x_i and m_t = \sum_{i \in \mathcal{S}_i} p_i.
+p_i = \sum_{i \in \mathcal{D}_{\mathcal{S}_i}} x_i \text{  and   } m_t = \sum_{i \in \mathcal{S}_i} p_i.
 ```
  And FedAvg : 
 ```math
