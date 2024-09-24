@@ -3,7 +3,7 @@
 ``FedOpt`` (Reddi et al., 2020) is a generalisation of the baseline algorithm `FedAvg` (McMahan et al.). `FedOpt` rewrites the update rule of `FedAvg` and thus allows the usage of gradient descent based optimizers for the server update. More precisely, `FedAvg` update rule is the average of all the clients parameters : 
 ```math
 \begin{align*}
-    x_{t+1} = \frac{1}{|\mathcal{S}|} \sum_{i \in \mathcal{S}} x_i^t
+    x_{t+1} = \frac{1}{|\mathcal{S}|} \sum_{i \in \mathcal{S}} x_i^t.
 \end{align*}
 ```
 
@@ -13,7 +13,7 @@ This update rule can be written as :
 
 ```math
 \begin{align*} 
-    x_{t+1} = x_t - \frac{1}{|\mathcal{S}|} \sum_{i \in \mathcal{S}} (x_t - x_i^t)
+    x_{t+1} = x_t - \frac{1}{|\mathcal{S}|} \sum_{i \in \mathcal{S}} (x_t - x_i^t).
 \end{align*}
 ```` 
 
@@ -32,7 +32,7 @@ Hence applying `SGD` with $-\Delta_t$ and $\eta = 1$ is equivalent to `FedAvg` :
     x_{t+1} & = x_t - 1 \times - \Delta_t  \\
             & = x_t + \Delta_t \\
             &= x_t + \frac{1}{|S|} \sum_{i \in S} (x_i^t - x_t) \\
-            &= \frac{1}{|S|} \sum_{i \in S} x_i^t \tag{1} 
+            &= \frac{1}{|S|} \sum_{i \in S} x_i^t. \tag{1} 
 \end{align*} 
 ```
 
@@ -40,7 +40,7 @@ Hence applying `SGD` with $-\Delta_t$ and $\eta = 1$ is equivalent to `FedAvg` :
 
 ```math
 \begin{align}
-    x_{t+1} = x_t + \frac{\sum_{i \in \mathcal{S}} p_i \Delta_i^t}{\sum_{i \in \mathcal{S}} p_i} \tag{2}
+    x_{t+1} = x_t + \frac{\sum_{i \in \mathcal{S}} p_i \Delta_i^t}{\sum_{i \in \mathcal{S}} p_i}. \tag{2}
 \end{align}
 ```
 
@@ -919,12 +919,12 @@ ServerYogi and ServerAdam produced significantly better results. While it is cle
 
 let 
 ```math
-$p_i = \sum_{i \in \mathcal{D}_{\mathcal{S}_i}} x_i$ and $m_t = \sum_{i \in \mathcal{S}_i} p_i$.
+p_i = \sum_{i \in \mathcal{D}_{\mathcal{S}_i}} x_i and m_t = \sum_{i \in \mathcal{S}_i} p_i.
 ```
  And FedAvg : 
 ```math
 \begin{align*}
-    x_{t+1} =  \frac{\sum_{i \in \mathcal{S}} p_i}{m_t} x_i^t
+    x_{t+1} =  \frac{\sum_{i \in \mathcal{S}} p_i}{m_t} x_i^t.
 \end{align*}
 ```
 
@@ -936,6 +936,6 @@ Then FedOpt:
             & = x_t + \frac{\sum_{i \in \mathcal{S}} p_i (x_i^t - x_t)}{m_t}\\
             & = x_t + \frac{1}{m_t} (\sum_{i \in \mathcal{S}} p_i x_i^t - \sum_{i \in \mathcal{S}} p_i x_t))\\
             & = x_t + \frac{1}{m_t} (\sum_{i \in \mathcal{S}} p_i x_i^t - m_t \times x_t))\\
-            & = \frac{\sum_{i \in \mathcal{S}} p_i }{m_t} x_i^t \\
+            & = \frac{\sum_{i \in \mathcal{S}} p_i }{m_t} x_i^t. \\
 \end{align*}
 ```
