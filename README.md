@@ -917,8 +917,11 @@ ServerYogi and ServerAdam produced significantly better results. While it is cle
 
 **Weighted average case** : 
 
-let $p_i = \sum_{i \in \mathcal{D}_{\mathcal{S}_i}} x_i$ and $m_t = \sum_{i \in \mathcal{S}_i} p_i$. And FedAvg : 
-
+let 
+```math
+$p_i = \sum_{i \in \mathcal{D}_{\mathcal{S}_i}} x_i$ and $m_t = \sum_{i \in \mathcal{S}_i} p_i$.
+```
+ And FedAvg : 
 ```math
 \begin{align*}
     x_{t+1} =  \frac{\sum_{i \in \mathcal{S}} p_i}{m_t} x_i^t
