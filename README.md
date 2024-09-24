@@ -762,7 +762,7 @@ class ServerAdam(ServerOpt):
             self.model.state_dict()[param_name].add_(adjusted_lr * mt_hat)
 ```
 
-What happens if we apply those optimizers with a strategy that handles batch-norm  ? 
+What happens if we apply those optimizers with a strategy that handles batch norm  ? 
 
 
 ```python
