@@ -232,7 +232,7 @@ class Net(torch.nn.Module):
 
 Below is the algorithm for FedOpt as defined in  [A Field Guide to Federated Optimization, Jianyu Wang et al. 2021](https://arxiv.org/abs/2107.06917)  which will serve as the basis for our implementation.
 
-![FedOpt](figs/FedOptAlg.png "FedOpt")
+![FedOpt](figs/FedOptAlg.PNG "FedOpt")
 
 
 ```python
