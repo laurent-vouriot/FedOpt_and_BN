@@ -1,5 +1,4 @@
 # Federated optimization and some batch normalization strategies. 
-
 ``FedOpt`` (Reddi et al., 2020) is a generalisation of the baseline algorithm `FedAvg` (McMahan et al.). `FedOpt` rewrites the update rule of `FedAvg` and thus allows the usage of gradient descent based optimizers for the server update. More precisely, `FedAvg` update rule is the average of all the clients parameters : 
 ```math
 \begin{align*}
@@ -357,7 +356,7 @@ def FedOpt(global_model, clients, clientOpt, serverOpt, rounds, verb=True):
             for param_name in local_delta.keys():
                 tmp =  (local_delta[param_name] * clients_samples[client_name] / total_samples)
                 tmp = tmp.to(aggregated_delta[param_name].dtype)
-                aggregated_delta[param_name] += tmp
+                aggregated_delta[param_name].add_(tmp)
 
         # update global model
         serverOpt.step(aggregated_delta, round+1)
@@ -377,56 +376,56 @@ print(f'global acc : {global_acc}, client1 acc : {client1_acc}, client2 acc : {c
 ```
 
     Round 1
-    Epoch [1/2], Loss: 2.3139
-    Epoch [2/2], Loss: 2.2718
-    Epoch [1/2], Loss: 2.2811
-    Epoch [2/2], Loss: 2.2361
+    Epoch [1/2], Loss: 2.2662
+    Epoch [2/2], Loss: 2.1749
+    Epoch [1/2], Loss: 2.2885
+    Epoch [2/2], Loss: 2.2446
     Round 2
-    Epoch [1/2], Loss: 2.2694
-    Epoch [2/2], Loss: 2.1776
-    Epoch [1/2], Loss: 2.2391
-    Epoch [2/2], Loss: 2.1710
+    Epoch [1/2], Loss: 2.1683
+    Epoch [2/2], Loss: 2.0566
+    Epoch [1/2], Loss: 2.2515
+    Epoch [2/2], Loss: 2.1790
     Round 3
-    Epoch [1/2], Loss: 2.1737
-    Epoch [2/2], Loss: 2.0480
-    Epoch [1/2], Loss: 2.1859
-    Epoch [2/2], Loss: 2.1115
+    Epoch [1/2], Loss: 2.0753
+    Epoch [2/2], Loss: 1.9829
+    Epoch [1/2], Loss: 2.1982
+    Epoch [2/2], Loss: 2.1096
     Round 4
-    Epoch [1/2], Loss: 2.0694
-    Epoch [2/2], Loss: 1.9678
+    Epoch [1/2], Loss: 2.0126
+    Epoch [2/2], Loss: 1.9374
     Epoch [1/2], Loss: 2.1414
-    Epoch [2/2], Loss: 2.0724
+    Epoch [2/2], Loss: 2.0550
     Round 5
-    Epoch [1/2], Loss: 1.9999
-    Epoch [2/2], Loss: 1.9230
-    Epoch [1/2], Loss: 2.1071
-    Epoch [2/2], Loss: 2.0436
+    Epoch [1/2], Loss: 1.9681
+    Epoch [2/2], Loss: 1.9000
+    Epoch [1/2], Loss: 2.0930
+    Epoch [2/2], Loss: 2.0164
     Round 6
-    Epoch [1/2], Loss: 1.9537
-    Epoch [2/2], Loss: 1.8885
-    Epoch [1/2], Loss: 2.0783
-    Epoch [2/2], Loss: 2.0182
+    Epoch [1/2], Loss: 1.9317
+    Epoch [2/2], Loss: 1.8647
+    Epoch [1/2], Loss: 2.0550
+    Epoch [2/2], Loss: 1.9884
     Round 7
-    Epoch [1/2], Loss: 1.9178
-    Epoch [2/2], Loss: 1.8599
-    Epoch [1/2], Loss: 2.0522
-    Epoch [2/2], Loss: 1.9927
+    Epoch [1/2], Loss: 1.8969
+    Epoch [2/2], Loss: 1.8271
+    Epoch [1/2], Loss: 2.0270
+    Epoch [2/2], Loss: 1.9683
     Round 8
-    Epoch [1/2], Loss: 1.8883
-    Epoch [2/2], Loss: 1.8350
-    Epoch [1/2], Loss: 2.0264
-    Epoch [2/2], Loss: 1.9669
+    Epoch [1/2], Loss: 1.8579
+    Epoch [2/2], Loss: 1.7884
+    Epoch [1/2], Loss: 2.0064
+    Epoch [2/2], Loss: 1.9533
     Round 9
-    Epoch [1/2], Loss: 1.8652
-    Epoch [2/2], Loss: 1.8149
-    Epoch [1/2], Loss: 2.0014
-    Epoch [2/2], Loss: 1.9421
+    Epoch [1/2], Loss: 1.8187
+    Epoch [2/2], Loss: 1.7548
+    Epoch [1/2], Loss: 1.9903
+    Epoch [2/2], Loss: 1.9416
     Round 10
-    Epoch [1/2], Loss: 1.8445
-    Epoch [2/2], Loss: 1.7988
-    Epoch [1/2], Loss: 1.9760
-    Epoch [2/2], Loss: 1.9177
-    global acc : 67, client1 acc : 67, client2 acc : 67
+    Epoch [1/2], Loss: 1.7852
+    Epoch [2/2], Loss: 1.7274
+    Epoch [1/2], Loss: 1.9769
+    Epoch [2/2], Loss: 1.9310
+    global acc : 71, client1 acc : 71, client2 acc : 71
     
 
 Results are not good, longer training and hyperparameters tuning should ameliorate the results. Also, local models are just copy of the global model, so no personalization.
@@ -450,7 +449,7 @@ def SiloBN(global_model, clients, clientOpt, serverOpt, rounds=50, verb=True):
     clients_samples = {client.name : len(client.dataset) for client in clients}
 
     # datastructure to keep in memory local bn statistics.
-    clients_local_bn_stats = {
+    clients_bn_stats = {
         client.name : {
             param_name : params for param_name, params in client.model.named_buffers() 
         } for client in clients
@@ -467,23 +466,21 @@ def SiloBN(global_model, clients, clientOpt, serverOpt, rounds=50, verb=True):
         } 
         
         for client in clients:
+            client.model.load_state_dict(global_model.state_dict())
             if round != 0:
-                # loading global model and previous round's local bn statistics.
-                client.model.load_state_dict(global_model.state_dict(), strict=False)  
-                client.model.state_dict().update(clients_local_bn_stats[client.name])  
-            else:
-                client.model.load_state_dict(global_model.state_dict())
+                for name, param in clients_bn_stats[client.name].items():
+                    client.model.state_dict()[name].copy_(param)
 
             clientOpt.step(client.model, client.dataset, verb=verb)
            
             # save local bn stats after local update
             for name, stats in client.model.named_buffers():
-                clients_local_bn_stats[client.name][name].copy_(stats)
+                clients_bn_stats[client.name][name].copy_(stats)
             
             # compute local changes, only on learnable parameters.
             for name, _ in client.model.named_parameters():
                 delta = client.model.state_dict()[name] - global_model.state_dict()[name]
-                clients_delta[client.name][name] = delta
+                clients_delta[client.name][name].copy_(delta)
 
         aggregated_delta = {name : torch.zeros_like(params) for name, params in global_model.named_parameters()}
 
@@ -492,7 +489,7 @@ def SiloBN(global_model, clients, clientOpt, serverOpt, rounds=50, verb=True):
             for param_name in local_delta.keys():
                 tmp =  (local_delta[param_name] * clients_samples[client_name] / total_samples)
                 tmp = tmp.to(aggregated_delta[param_name].dtype)
-                aggregated_delta[param_name] += tmp
+                aggregated_delta[param_name].add_(tmp)
             
         serverOpt.step(aggregated_delta, round+1)
         
@@ -506,71 +503,71 @@ print(f'client1 acc : {client1_acc}, client2 acc : {client2_acc}')
 ```
 
     Round 1
-    Epoch [1/2], Loss: 2.2753
-    Epoch [2/2], Loss: 2.1979
-    Epoch [1/2], Loss: 2.2871
-    Epoch [2/2], Loss: 2.2481
+    Epoch [1/2], Loss: 2.2788
+    Epoch [2/2], Loss: 2.1978
+    Epoch [1/2], Loss: 2.2887
+    Epoch [2/2], Loss: 2.2562
     Round 2
-    Epoch [1/2], Loss: 2.1953
-    Epoch [2/2], Loss: 2.0995
-    Epoch [1/2], Loss: 2.2558
-    Epoch [2/2], Loss: 2.1952
+    Epoch [1/2], Loss: 2.1863
+    Epoch [2/2], Loss: 2.0492
+    Epoch [1/2], Loss: 2.2661
+    Epoch [2/2], Loss: 2.2194
     Round 3
-    Epoch [1/2], Loss: 2.1120
-    Epoch [2/2], Loss: 2.0158
-    Epoch [1/2], Loss: 2.2121
-    Epoch [2/2], Loss: 2.1343
+    Epoch [1/2], Loss: 2.0594
+    Epoch [2/2], Loss: 1.9366
+    Epoch [1/2], Loss: 2.2409
+    Epoch [2/2], Loss: 2.1789
     Round 4
-    Epoch [1/2], Loss: 2.0400
-    Epoch [2/2], Loss: 1.9525
-    Epoch [1/2], Loss: 2.1618
-    Epoch [2/2], Loss: 2.0774
+    Epoch [1/2], Loss: 1.9665
+    Epoch [2/2], Loss: 1.8743
+    Epoch [1/2], Loss: 2.2103
+    Epoch [2/2], Loss: 2.1357
     Round 5
-    Epoch [1/2], Loss: 1.9805
-    Epoch [2/2], Loss: 1.8964
-    Epoch [1/2], Loss: 2.1114
-    Epoch [2/2], Loss: 2.0299
+    Epoch [1/2], Loss: 1.9096
+    Epoch [2/2], Loss: 1.8354
+    Epoch [1/2], Loss: 2.1730
+    Epoch [2/2], Loss: 2.0913
     Round 6
-    Epoch [1/2], Loss: 1.9288
-    Epoch [2/2], Loss: 1.8520
-    Epoch [1/2], Loss: 2.0687
-    Epoch [2/2], Loss: 1.9957
+    Epoch [1/2], Loss: 1.8716
+    Epoch [2/2], Loss: 1.8099
+    Epoch [1/2], Loss: 2.1312
+    Epoch [2/2], Loss: 2.0441
     Round 7
-    Epoch [1/2], Loss: 1.8845
-    Epoch [2/2], Loss: 1.8170
-    Epoch [1/2], Loss: 2.0355
-    Epoch [2/2], Loss: 1.9707
+    Epoch [1/2], Loss: 1.8456
+    Epoch [2/2], Loss: 1.7889
+    Epoch [1/2], Loss: 2.0852
+    Epoch [2/2], Loss: 1.9949
     Round 8
-    Epoch [1/2], Loss: 1.8503
-    Epoch [2/2], Loss: 1.7922
-    Epoch [1/2], Loss: 2.0092
-    Epoch [2/2], Loss: 1.9502
+    Epoch [1/2], Loss: 1.8263
+    Epoch [2/2], Loss: 1.7706
+    Epoch [1/2], Loss: 2.0376
+    Epoch [2/2], Loss: 1.9491
     Round 9
-    Epoch [1/2], Loss: 1.8240
-    Epoch [2/2], Loss: 1.7698
-    Epoch [1/2], Loss: 1.9870
-    Epoch [2/2], Loss: 1.9325
+    Epoch [1/2], Loss: 1.8079
+    Epoch [2/2], Loss: 1.7528
+    Epoch [1/2], Loss: 1.9934
+    Epoch [2/2], Loss: 1.9102
     Round 10
-    Epoch [1/2], Loss: 1.7986
-    Epoch [2/2], Loss: 1.7499
-    Epoch [1/2], Loss: 1.9682
-    Epoch [2/2], Loss: 1.9162
-    client1 acc : 64, client2 acc : 68
+    Epoch [1/2], Loss: 1.7907
+    Epoch [2/2], Loss: 1.7362
+    Epoch [1/2], Loss: 1.9554
+    Epoch [2/2], Loss: 1.8774
+    client1 acc : 64, client2 acc : 74
     
 
-Nothing better
+Some struggles with client 1 and slight improvement with client 2
 
 ## FedBN
 FedBN ([FedBN: Federated Learning on Non-IID Features via Local Batch Normalization, Li et al. 2021](https://arxiv.org/abs/2102.07623))is a federated learning approach where all batch normalization parameters, including the learnable parameters (e.g., scale and shift parameters) and the running statistics (e.g., mean and variance), are kept local to each client.
 
-![FedBN](figs/FedBN.PNG "FedBN algorithm")
+![FedBN](figs/FedBN.png "FedBN algorithm")
 
 
 ```python
 def FedBN(global_model, clients, clientOpt, serverOpt, rounds=50, verb=True):
     
     # datastructure to keep in memory local bn statistics.
-    clients_local_bn_stats = {
+    clients_bn_stats = {
         client.name: {
             param_name: params for param_name, params in client.model.state_dict().items() if 'bn' in param_name
         } for client in clients
@@ -592,15 +589,16 @@ def FedBN(global_model, clients, clientOpt, serverOpt, rounds=50, verb=True):
         
         for client in clients:
             # load global model and previous round's local bn statistics.
-            client.model.load_state_dict(global_model.state_dict(), strict=False) 
-            client.model.state_dict().update(clients_local_bn_stats[client.name])  
+            client.model.load_state_dict(global_model.state_dict()) 
+            for param_name, param in clients_bn_stats[client.name].items():
+                client.model.state_dict()[param_name].copy_(param) 
 
             clientOpt.step(client.model, client.dataset, verb=verb)
            
             # save local bn stats 
             for name, stats in client.model.state_dict().items():
                 if 'bn' in name: 
-                    clients_local_bn_stats[client.name][name].copy_(stats)
+                    clients_bn_stats[client.name][name].copy_(stats)
             
             # local changes, bn layers are excluded
             for name in client.model.state_dict().keys():
@@ -628,59 +626,59 @@ print(f'client1 acc : {client1_acc}, client2 acc : {client2_acc}')
 ```
 
     Round 1
-    Epoch [1/2], Loss: 2.2746
-    Epoch [2/2], Loss: 2.1991
-    Epoch [1/2], Loss: 2.2926
-    Epoch [2/2], Loss: 2.2515
+    Epoch [1/2], Loss: 2.2596
+    Epoch [2/2], Loss: 2.1786
+    Epoch [1/2], Loss: 2.2981
+    Epoch [2/2], Loss: 2.2629
     Round 2
-    Epoch [1/2], Loss: 2.1930
-    Epoch [2/2], Loss: 2.0727
-    Epoch [1/2], Loss: 2.2581
-    Epoch [2/2], Loss: 2.1980
+    Epoch [1/2], Loss: 2.1719
+    Epoch [2/2], Loss: 2.0571
+    Epoch [1/2], Loss: 2.2707
+    Epoch [2/2], Loss: 2.2148
     Round 3
-    Epoch [1/2], Loss: 2.0834
-    Epoch [2/2], Loss: 1.9611
-    Epoch [1/2], Loss: 2.2192
-    Epoch [2/2], Loss: 2.1555
+    Epoch [1/2], Loss: 2.0719
+    Epoch [2/2], Loss: 1.9701
+    Epoch [1/2], Loss: 2.2324
+    Epoch [2/2], Loss: 2.1540
     Round 4
-    Epoch [1/2], Loss: 1.9867
-    Epoch [2/2], Loss: 1.8786
-    Epoch [1/2], Loss: 2.1875
-    Epoch [2/2], Loss: 2.1218
+    Epoch [1/2], Loss: 1.9973
+    Epoch [2/2], Loss: 1.9063
+    Epoch [1/2], Loss: 2.1829
+    Epoch [2/2], Loss: 2.0964
     Round 5
-    Epoch [1/2], Loss: 1.9116
-    Epoch [2/2], Loss: 1.8231
-    Epoch [1/2], Loss: 2.1589
-    Epoch [2/2], Loss: 2.0877
+    Epoch [1/2], Loss: 1.9390
+    Epoch [2/2], Loss: 1.8571
+    Epoch [1/2], Loss: 2.1345
+    Epoch [2/2], Loss: 2.0530
     Round 6
-    Epoch [1/2], Loss: 1.8590
-    Epoch [2/2], Loss: 1.7826
-    Epoch [1/2], Loss: 2.1270
-    Epoch [2/2], Loss: 2.0520
+    Epoch [1/2], Loss: 1.8916
+    Epoch [2/2], Loss: 1.8133
+    Epoch [1/2], Loss: 2.0946
+    Epoch [2/2], Loss: 2.0213
     Round 7
-    Epoch [1/2], Loss: 1.8207
-    Epoch [2/2], Loss: 1.7548
-    Epoch [1/2], Loss: 2.0929
-    Epoch [2/2], Loss: 2.0187
+    Epoch [1/2], Loss: 1.8494
+    Epoch [2/2], Loss: 1.7798
+    Epoch [1/2], Loss: 2.0633
+    Epoch [2/2], Loss: 1.9970
     Round 8
-    Epoch [1/2], Loss: 1.7920
-    Epoch [2/2], Loss: 1.7331
-    Epoch [1/2], Loss: 2.0603
-    Epoch [2/2], Loss: 1.9898
+    Epoch [1/2], Loss: 1.8153
+    Epoch [2/2], Loss: 1.7534
+    Epoch [1/2], Loss: 2.0373
+    Epoch [2/2], Loss: 1.9770
     Round 9
-    Epoch [1/2], Loss: 1.7704
-    Epoch [2/2], Loss: 1.7176
-    Epoch [1/2], Loss: 2.0302
-    Epoch [2/2], Loss: 1.9648
+    Epoch [1/2], Loss: 1.7875
+    Epoch [2/2], Loss: 1.7312
+    Epoch [1/2], Loss: 2.0158
+    Epoch [2/2], Loss: 1.9595
     Round 10
-    Epoch [1/2], Loss: 1.7529
-    Epoch [2/2], Loss: 1.7034
-    Epoch [1/2], Loss: 2.0042
-    Epoch [2/2], Loss: 1.9431
-    client1 acc : 65, client2 acc : 71
+    Epoch [1/2], Loss: 1.7655
+    Epoch [2/2], Loss: 1.7152
+    Epoch [1/2], Loss: 1.9969
+    Epoch [2/2], Loss: 1.9439
+    client1 acc : 67, client2 acc : 72
     
 
-Some improvments for client2, but still slow convergence...
+Some improvments for client1, but still slow convergence...
 
 # ServerOpts
 
@@ -771,56 +769,56 @@ print(f'client1 acc : {client1_acc}, client2 acc : {client2_acc}')
 ```
 
     Round 1
-    Epoch [1/2], Loss: 2.2780
-    Epoch [2/2], Loss: 2.1982
-    Epoch [1/2], Loss: 2.2836
-    Epoch [2/2], Loss: 2.2419
+    Epoch [1/2], Loss: 2.2481
+    Epoch [2/2], Loss: 2.1569
+    Epoch [1/2], Loss: 2.3072
+    Epoch [2/2], Loss: 2.2804
     Round 2
-    Epoch [1/2], Loss: 2.0158
-    Epoch [2/2], Loss: 1.9306
-    Epoch [1/2], Loss: 2.1311
-    Epoch [2/2], Loss: 2.0536
+    Epoch [1/2], Loss: 1.9626
+    Epoch [2/2], Loss: 1.8888
+    Epoch [1/2], Loss: 2.2197
+    Epoch [2/2], Loss: 2.1462
     Round 3
-    Epoch [1/2], Loss: 1.8562
-    Epoch [2/2], Loss: 1.8014
-    Epoch [1/2], Loss: 2.0157
-    Epoch [2/2], Loss: 1.9664
+    Epoch [1/2], Loss: 1.8160
+    Epoch [2/2], Loss: 1.7682
+    Epoch [1/2], Loss: 2.0917
+    Epoch [2/2], Loss: 2.0309
     Round 4
-    Epoch [1/2], Loss: 1.7722
-    Epoch [2/2], Loss: 1.7312
-    Epoch [1/2], Loss: 1.9529
-    Epoch [2/2], Loss: 1.9200
+    Epoch [1/2], Loss: 1.7483
+    Epoch [2/2], Loss: 1.7131
+    Epoch [1/2], Loss: 1.9900
+    Epoch [2/2], Loss: 1.9399
     Round 5
-    Epoch [1/2], Loss: 1.7117
-    Epoch [2/2], Loss: 1.6833
-    Epoch [1/2], Loss: 1.9067
-    Epoch [2/2], Loss: 1.8800
+    Epoch [1/2], Loss: 1.7114
+    Epoch [2/2], Loss: 1.6825
+    Epoch [1/2], Loss: 1.8955
+    Epoch [2/2], Loss: 1.8543
     Round 6
-    Epoch [1/2], Loss: 1.6668
-    Epoch [2/2], Loss: 1.6503
-    Epoch [1/2], Loss: 1.8648
-    Epoch [2/2], Loss: 1.8400
+    Epoch [1/2], Loss: 1.6850
+    Epoch [2/2], Loss: 1.6604
+    Epoch [1/2], Loss: 1.8138
+    Epoch [2/2], Loss: 1.7837
     Round 7
-    Epoch [1/2], Loss: 1.6380
-    Epoch [2/2], Loss: 1.6259
-    Epoch [1/2], Loss: 1.8231
-    Epoch [2/2], Loss: 1.7994
+    Epoch [1/2], Loss: 1.6646
+    Epoch [2/2], Loss: 1.6429
+    Epoch [1/2], Loss: 1.7521
+    Epoch [2/2], Loss: 1.7318
     Round 8
-    Epoch [1/2], Loss: 1.6183
-    Epoch [2/2], Loss: 1.6087
-    Epoch [1/2], Loss: 1.7782
-    Epoch [2/2], Loss: 1.7580
+    Epoch [1/2], Loss: 1.6430
+    Epoch [2/2], Loss: 1.6279
+    Epoch [1/2], Loss: 1.7106
+    Epoch [2/2], Loss: 1.6964
     Round 9
-    Epoch [1/2], Loss: 1.6096
-    Epoch [2/2], Loss: 1.5992
-    Epoch [1/2], Loss: 1.7356
-    Epoch [2/2], Loss: 1.7199
+    Epoch [1/2], Loss: 1.6238
+    Epoch [2/2], Loss: 1.6121
+    Epoch [1/2], Loss: 1.6839
+    Epoch [2/2], Loss: 1.6738
     Round 10
-    Epoch [1/2], Loss: 1.6013
-    Epoch [2/2], Loss: 1.5933
-    Epoch [1/2], Loss: 1.6989
-    Epoch [2/2], Loss: 1.6884
-    client1 acc : 84, client2 acc : 85
+    Epoch [1/2], Loss: 1.6076
+    Epoch [2/2], Loss: 1.5980
+    Epoch [1/2], Loss: 1.6664
+    Epoch [2/2], Loss: 1.6589
+    client1 acc : 82, client2 acc : 85
     
 
 Way better ! Let's try all of them 
@@ -873,19 +871,20 @@ df.head()
   <tbody>
     <tr>
       <th>SiloBN</th>
-      <td>(68, 77)</td>
-      <td>(85, 85)</td>
-      <td>(84, 86)</td>
+      <td>(68, 78)</td>
+      <td>(82, 83)</td>
+      <td>(83, 84)</td>
     </tr>
     <tr>
       <th>FedBN</th>
-      <td>(70, 78)</td>
-      <td>(85, 83)</td>
-      <td>(82, 85)</td>
+      <td>(71, 74)</td>
+      <td>(84, 85)</td>
+      <td>(83, 84)</td>
     </tr>
   </tbody>
 </table>
 </div>
+
 
 
 
