@@ -889,7 +889,7 @@ ServerYogi and ServerAdam produced significantly better results. While it is cle
 
 [Communication-efficient learning of deep networks from decentralized data, McMahan et al. 2023](https://arxiv.org/abs/1602.05629)
 
-## Full derivations of (1) and (2)
+## Full details of (1) and (2)
 
 ```math
 \begin{align*}
